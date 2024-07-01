@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# 设置系统时区为东八区
+echo "设置时区为东八区"
+sudo timedatectl set-timezone Asia/Shanghai
+
 # 获取当前脚本所在的目录
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
