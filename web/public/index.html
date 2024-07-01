@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Renewal Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #444;
+        }
+        #machines {
+            width: 80%;
+            max-width: 1200px;
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .machine {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            flex: 1 1 calc(33.333% - 40px);
+            box-sizing: border-box;
+            position: relative;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .machine div {
+            margin-bottom: 5px;
+        }
+        .delete-button, .renew-button {
+            margin-top: auto;
+            align-self: flex-end;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .delete-button {
+            background-color: #dc3545;
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        .renew-button {
+            background-color: #28a745;
+        }
+        .renew-button:hover {
+            background-color: #218838;
+        }
+        .renew-button.disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        form {
+            display: none;
+            width: 80%;
+            max-width: 800px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        form div {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Machine Renewal Monitor</h1>
+
+    <!-- 机器列表 -->
+    <div id="machines"></div>
+
+    <!-- 添加机器按钮 -->
+    <button id="add-machine-btn">Add Machine</button>
+
+    <!-- 添加机器的表单 -->
+    <form id="machine-form">
+        <div>
+            <label for="id">ID:</label>
+            <input type="number" id="id" name="id" required>
+        </div>
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label for="expiry_date">Expiry Date:</label>
+            <input type="date" id="expiry_date" name="expiry_date" required>
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        function formatDateString(dateString) {
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+        }
+
+        async function fetchMachines() {
+            try {
+                const response = await fetch('/api/machines');
+                const data = await response.json();
+                const machinesDiv = document.getElementById('machines');
+                machinesDiv.innerHTML = '';
+                data.machines.forEach(machine => {
+                    const nextRenewalDate = addDays(machine.expiry_date, 7);
+                    const currentDate = new Date();
+                    const renewalButtonDisabled = currentDate < nextRenewalDate;
+                    const machineDiv = document.createElement('div');
+                    machineDiv.className = 'machine';
+                    machineDiv.innerHTML = `
+                        <div>
+                            <div><strong>ID:</strong> ${machine.id}</div>
+                            <div><strong>Name:</strong> ${machine.name}</div>
+                            <div><strong>Expiry Date:</strong> ${machine.expiry_date}</div>
+                            <div><strong>Next Renewal Date:</strong> ${formatDateString(nextRenewalDate)}</div>
+                        </div>
+                        <button class="renew-button ${renewalButtonDisabled ? 'disabled' : ''}" data-id="${machine.id}" ${renewalButtonDisabled ? 'disabled' : ''}>Renew</button>
+                        <button class="delete-button" data-id="${machine.id}">Delete</button>
+                    `;
+                    machinesDiv.appendChild(machineDiv);
+                });
+
+                // 添加删除按钮事件监听
+                document.querySelectorAll('.delete-button').forEach(button => {
+                    button.addEventListener('click', async (event) => {
+                        const id = event.target.getAttribute('data-id');
+                        if (confirm('Are you sure you want to delete this machine?')) {
+                            try {
+                                await fetch(`/api/machines/${id}`, {
+                                    method: 'DELETE'
+                                });
+                                fetchMachines();
+                            } catch (error) {
+                                console.error('Error deleting machine:', error);
+                            }
+                        }
+                    });
+                });
+
+                // 添加续期按钮事件监听
+                document.querySelectorAll('.renew-button').forEach(button => {
+                    button.addEventListener('click', async (event) => {
+                        const id = event.target.getAttribute('data-id');
+                        const currentDate = formatDateString(new Date());
+                        try {
+                            await fetch(`/api/machines/${id}/renew`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ expiry_date: currentDate })
+                            });
+                            fetchMachines();
+                        } catch (error) {
+                            console.error('Error renewing machine:', error);
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error fetching machines:', error);
+            }
+        }
+
+        // 添加机器按钮点击事件处理
+        document.getElementById('add-machine-btn').addEventListener('click', function() {
+            const form = document.getElementById('machine-form');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        });
+
+        // 提交表单处理
+        document.getElementById('machine-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = {
+                id: formData.get('id'),
+                name: formData.get('name'),
+                expiry_date: formData.get('expiry_date')
+            };
+            try {
+                await fetch('/api/machines', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                fetchMachines();
+                event.target.reset();
+                document.getElementById('machine-form').style.display = 'none';
+            } catch (error) {
+                console.error('Error submitting form:', error);
+            }
+        });
+
+        // 初始化加载机器列表
+        fetchMachines();
+    </script>
+</body>
+</html>
