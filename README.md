@@ -4,4 +4,6 @@
 
 实现TG和PUSHPLUS每隔半个小时通知
 
+TG和pushplus提醒配置分别在server.js第85、87行以及第144行
+
 访问地址http://ip:3000
