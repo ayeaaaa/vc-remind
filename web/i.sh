@@ -4,52 +4,64 @@ export TZ="Asia/Shanghai"
 # 获取当前脚本所在的目录
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-# 安装 NVM
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+# 加载 nvm 环境设置
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# 使 NVM 在当前 Shell 中生效
-source ~/.bashrc
+# 检查 nvm 是否成功加载
+if command -v nvm &> /dev/null; then
+    echo "nvm 已加载。"
+else
+    echo "无法找到 nvm 命令，请检查安装过程中的问题。"
+    exit 1  # 如果无法找到 nvm 命令，退出脚本并返回错误码
+fi
 
-# 安装最新版本的 Node.js
+# 使用 nvm 安装最新版本的 Node.js
 nvm install node
 
-# 进入项目目录
-cd "$DIR"
+# 确保 Node.js 安装成功后，继续其他操作
+if command -v node &> /dev/null; then
+    # 进入项目目录
+    cd "$DIR"
 
-# 安装 Node.js 依赖
-npm install express sqlite3 path axios telegraf node-schedule
+    # 安装 Node.js 依赖
+    npm install express sqlite3 path axios telegraf node-schedule
 
-# 安装 pm2
-npm install -g pm2
+    # 安装 pm2
+    npm install -g pm2
 
-# 输出安装完成信息
-echo "依赖安装完成。"
+    # 输出安装完成信息
+    echo "依赖安装完成。"
 
-# 询问用户操作选项
-echo "请选择一个操作："
-echo "1. 启动服务"
-echo "2. 停止服务"
-echo "3. 设置开机自启"
-read -p "输入选项 (1/2/3): " choice
+    # 询问用户操作选项
+    echo "请选择一个操作："
+    echo "1. 启动服务"
+    echo "2. 停止服务"
+    echo "3. 设置开机自启"
+    read -p "输入选项 (1/2/3): " choice
 
-case "$choice" in
-    1)
-        # 启动 Node.js 服务，并使用 pm2 后台运行
-        pm2 start server.js --name my-app
-        echo "Node.js 服务已启动。"
-        ;;
-    2)
-        # 停止 Node.js 服务
-        pm2 stop my-app
-        echo "Node.js 服务已停止。"
-        ;;
-    3)
-        # 设置开机自启
-        pm2 startup
-        pm2 save
-        echo "开机自启已设置。"
-        ;;
-    *)
-        echo "无效选项。"
-        ;;
-esac
+    case "$choice" in
+        1)
+            # 启动 Node.js 服务，并使用 pm2 后台运行
+            pm2 start server.js --name my-app
+            echo "Node.js 服务已启动。"
+            ;;
+        2)
+            # 停止 Node.js 服务
+            pm2 stop my-app
+            echo "Node.js 服务已停止。"
+            ;;
+        3)
+            # 设置开机自启
+            pm2 startup
+            pm2 save
+            echo "开机自启已设置。"
+            ;;
+        *)
+            echo "无效选项。"
+            ;;
+    esac
+else
+    echo "Node.js 安装失败，请检查安装过程中的问题。"
+fi
