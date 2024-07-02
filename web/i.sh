@@ -1,9 +1,6 @@
 #!/bin/bash
-
-# 设置系统时区为东八区
-echo "设置时区为东八区"
-sudo timedatectl set-timezone Asia/Shanghai
-
+# 设置时区为东八区
+export TZ="Asia/Shanghai"
 # 获取当前脚本所在的目录
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
@@ -22,51 +19,37 @@ cd "$DIR"
 # 安装 Node.js 依赖
 npm install express sqlite3 path axios telegraf node-schedule
 
+# 安装 pm2
+npm install -g pm2
+
 # 输出安装完成信息
 echo "依赖安装完成。"
 
-# 询问用户是否启动服务
-read -p "是否启动服务？(y/n): " choice
+# 询问用户操作选项
+echo "请选择一个操作："
+echo "1. 启动服务"
+echo "2. 停止服务"
+echo "3. 设置开机自启"
+read -p "输入选项 (1/2/3): " choice
 
-if [ "$choice" = "y" ]; then
-    # 启动 Node.js 服务，并后台运行
-    nohup node server.js > server.log &
-    echo "Node.js 服务已启动，日志文件：$DIR/server.log"
-
-    # 添加自动启动服务的功能
-    read -p "是否设置为系统启动时自动启动？(y/n): " auto_start_choice
-    if [ "$auto_start_choice" = "y" ]; then
-        # 创建 systemd 服务文件
-        cat << EOF > /etc/systemd/system/node-app.service
-[Unit]
-Description=Node.js Application
-Documentation=https://your-documentation-url.com
-After=network.target
-
-[Service]
-Environment=NODE_ENV=production
-Type=simple
-ExecStart=$DIR/server.js
-Restart=always
-RestartSec=10
-User=$USER
-Group=$USER
-WorkingDirectory=$DIR
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-        # 重新加载 systemd 配置文件
-        systemctl daemon-reload
-
-        # 启用服务，使其开机自启动
-        systemctl enable node-app
-
-        echo "已设置为系统启动时自动启动。"
-    else
-        echo "未设置为系统启动时自动启动。"
-    fi
-else
-    echo "未启动服务。"
-fi
+case "$choice" in
+    1)
+        # 启动 Node.js 服务，并使用 pm2 后台运行
+        pm2 start server.js --name my-app
+        echo "Node.js 服务已启动。"
+        ;;
+    2)
+        # 停止 Node.js 服务
+        pm2 stop my-app
+        echo "Node.js 服务已停止。"
+        ;;
+    3)
+        # 设置开机自启
+        pm2 startup
+        pm2 save
+        echo "开机自启已设置。"
+        ;;
+    *)
+        echo "无效选项。"
+        ;;
+esac
