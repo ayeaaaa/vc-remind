@@ -69,13 +69,20 @@ app.post('/api/machines/:id/renew', (req, res) => {
     });
 });
 
+
+// 路由：获取服务器当前时间
+app.get('/api/currentTime', (req, res) => {
+    const currentTime = new Date();
+    res.json({ currentTime });
+});
+
 // 捕获所有其他路由，返回 `index.html`
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Telegram Bot 设置
-const token = '您的 Telegram Chat TOKEN';
+const token = '您的 Telegram Chat TOKEN'; // 您的 Telegram Chat ID
 const bot = new Telegraf(token);
 const chatId = '您的 Telegram Chat ID'; // 您的 Telegram Chat ID
 
@@ -134,7 +141,7 @@ function addDays(date, days) {
 
 // 辅助函数：推送消息到 PushPlus
 function sendPushPlusMessage(message) {
-    const pushplusToken = 'PushPlus Token'; // 替换为你的 PushPlus Token
+    const pushplusToken = '替换为你的 PushPlus Token'; // 替换为你的 PushPlus Token
     const url = `http://www.pushplus.plus/send?token=${pushplusToken}&title=续期提醒&content=${encodeURIComponent(message)}`;
     
     axios.post(url)
