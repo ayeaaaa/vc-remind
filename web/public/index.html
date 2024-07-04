@@ -109,6 +109,19 @@
         button:hover {
             background-color: #0056b3;
         }
+        #iframe-container {
+            display: none;
+            width: 80%;
+            max-width: 1200px;
+            margin: 20px 0;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -119,6 +132,9 @@
 
     <!-- 添加机器按钮 -->
     <button id="add-machine-btn">Add Machine</button>
+
+    <!-- 嵌入网站的按钮 -->
+    <button id="embed-website-btn">打开VPS.VC</button>
 
     <!-- 添加机器的表单 -->
     <form id="machine-form">
@@ -136,6 +152,11 @@
         </div>
         <button type="submit">Submit</button>
     </form>
+
+    <!-- 嵌入网站的容器 -->
+    <div id="iframe-container">
+        <iframe src="https://free.vps.vc" frameborder="0"></iframe>
+    </div>
 
     <script>
         function addDays(date, days) {
@@ -222,6 +243,16 @@
                 form.style.display = 'block';
             } else {
                 form.style.display = 'none';
+            }
+        });
+
+        // 嵌入网站按钮点击事件处理
+        document.getElementById('embed-website-btn').addEventListener('click', function() {
+            const iframeContainer = document.getElementById('iframe-container');
+            if (iframeContainer.style.display === 'none' || iframeContainer.style.display === '') {
+                iframeContainer.style.display = 'block';
+            } else {
+                iframeContainer.style.display = 'none';
             }
         });
 
